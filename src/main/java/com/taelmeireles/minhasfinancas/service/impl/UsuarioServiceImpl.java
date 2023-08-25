@@ -2,8 +2,10 @@ package com.taelmeireles.minhasfinancas.service.impl;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.taelmeireles.minhasfinancas.exception.AutenticacaoException;
 import com.taelmeireles.minhasfinancas.exception.RegraNegocioException;
@@ -11,7 +13,6 @@ import com.taelmeireles.minhasfinancas.model.Usuario;
 import com.taelmeireles.minhasfinancas.repository.UsuarioRepository;
 import com.taelmeireles.minhasfinancas.service.UsuarioService;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -21,10 +22,11 @@ public class UsuarioServiceImpl implements UsuarioService {
     private final UsuarioRepository usuarioRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public Usuario authenticate(String email, String senha) {
         
         Optional<Usuario> usuarioOpt = this.usuarioRepository.findByEmail(email);
-
+        
         if(usuarioOpt.isEmpty() || Objects.isNull(usuarioOpt.get().getEmail())) {
             throw new AutenticacaoException("Usuário não encontrado pelo email informado.");
         }
@@ -53,7 +55,13 @@ public class UsuarioServiceImpl implements UsuarioService {
         }
         
     }
-    
 
+    @Override
+    @Transactional(readOnly = true)
+    public Usuario findById(UUID usuarioId) {
+        Optional<Usuario> usuarioOpt = this.usuarioRepository.findById(usuarioId);
+        return usuarioOpt.orElseThrow(() -> new RegraNegocioException("Usuario não encontrado pelo 'ID' informado."));
+    }
+    
 
 }

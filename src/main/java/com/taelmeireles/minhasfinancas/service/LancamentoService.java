@@ -1,20 +1,22 @@
 package com.taelmeireles.minhasfinancas.service;
 
 import java.util.List;
+import java.util.UUID;
 
-import com.taelmeireles.minhasfinancas.enums.StatusLancamento;
-import com.taelmeireles.minhasfinancas.model.Lancamento;
+import com.taelmeireles.minhasfinancas.dto.LancamentoDto;
 
 public interface LancamentoService {
 
-    Lancamento salvar(Lancamento lancamento);
+    LancamentoDto salvar(LancamentoDto dto);
 
-    Lancamento atualizar(Lancamento lancamento);
+    LancamentoDto atualizar(LancamentoDto dto);
 
-    List<Lancamento> buscar(Lancamento lancamentoFiltro);
+    List<LancamentoDto> buscar(LancamentoDto dto);
 
-    void atualizarStatus(Lancamento lancamento, StatusLancamento status);
+    LancamentoDto buscarPorId(UUID lancamentoId);
+
+    void atualizarStatus(UUID lancamentoId, String status);
     
-    void deletar(Lancamento lancamento);
+    void deletar(UUID lancamentoId);
 
 }
