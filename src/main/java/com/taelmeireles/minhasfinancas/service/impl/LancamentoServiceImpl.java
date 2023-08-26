@@ -51,7 +51,7 @@ public class LancamentoServiceImpl implements LancamentoService {
 
         }
 
-        throw new RegraNegocioException("Lançamento deve possuir 'ID' ou 'ID_USUARIO' deve ser informado.");
+        throw new RegraNegocioException("Lançamento não deve possuir 'ID' ou 'ID_USUARIO' deve ser informado.");
 
     }   
 
@@ -112,8 +112,8 @@ public class LancamentoServiceImpl implements LancamentoService {
     @Override
     @Transactional(readOnly = true)
     public BigDecimal obterSaldoPorUsuario(UUID usuarioId) {
-        BigDecimal receitas = this.repository.obterSaldoPorTipoLancamentoEUsuaririo(usuarioId, TipoLancamento.RECEITA);
-        BigDecimal despesas = this.repository.obterSaldoPorTipoLancamentoEUsuaririo(usuarioId, TipoLancamento.DESPESA);
+        BigDecimal receitas = this.repository.obterSaldoPorTipoLancamentoEUsuario(usuarioId, TipoLancamento.RECEITA);
+        BigDecimal despesas = this.repository.obterSaldoPorTipoLancamentoEUsuario(usuarioId, TipoLancamento.DESPESA);
 
         if(Objects.isNull(receitas)) {
             receitas = BigDecimal.ZERO;
