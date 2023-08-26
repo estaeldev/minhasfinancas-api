@@ -108,7 +108,7 @@ public class LancamentoServiceImpl implements LancamentoService {
         Objects.requireNonNull(lancamentoDto);
         this.repository.delete(LancamentoMapper.fromDtoToEntity(lancamentoDto, null));
     }
-
+    
     @Override
     @Transactional(readOnly = true)
     public BigDecimal obterSaldoPorUsuario(UUID usuarioId) {
