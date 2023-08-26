@@ -1,5 +1,6 @@
 package com.taelmeireles.minhasfinancas.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,5 +19,7 @@ public interface LancamentoService {
     void atualizarStatus(UUID lancamentoId, String status);
     
     void deletar(UUID lancamentoId);
+
+    BigDecimal obterSaldoPorUsuario(UUID usuario);
 
 }

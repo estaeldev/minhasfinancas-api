@@ -1,5 +1,6 @@
 package com.taelmeireles.minhasfinancas.service.impl;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.taelmeireles.minhasfinancas.dto.LancamentoDto;
 import com.taelmeireles.minhasfinancas.enums.StatusLancamento;
+import com.taelmeireles.minhasfinancas.enums.TipoLancamento;
 import com.taelmeireles.minhasfinancas.exception.RegraNegocioException;
 import com.taelmeireles.minhasfinancas.mapper.LancamentoMapper;
 import com.taelmeireles.minhasfinancas.model.Lancamento;
@@ -105,6 +107,24 @@ public class LancamentoServiceImpl implements LancamentoService {
         LancamentoDto lancamentoDto = buscarPorId(lancamentoId);
         Objects.requireNonNull(lancamentoDto);
         this.repository.delete(LancamentoMapper.fromDtoToEntity(lancamentoDto, null));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BigDecimal obterSaldoPorUsuario(UUID usuarioId) {
+        BigDecimal receitas = this.repository.obterSaldoPorTipoLancamentoEUsuaririo(usuarioId, TipoLancamento.RECEITA);
+        BigDecimal despesas = this.repository.obterSaldoPorTipoLancamentoEUsuaririo(usuarioId, TipoLancamento.DESPESA);
+
+        if(Objects.isNull(receitas)) {
+            receitas = BigDecimal.ZERO;
+        }
+
+        if(Objects.isNull(despesas)) {
+            despesas = BigDecimal.ZERO;
+        }
+        
+        return receitas.subtract(despesas);
+
     }
     
 }
