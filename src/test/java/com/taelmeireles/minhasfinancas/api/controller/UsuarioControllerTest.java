@@ -57,8 +57,8 @@ class UsuarioControllerTest {
 
     @BeforeEach
     void config() {
-        this.usuarioRepository.deleteAll();
         this.lancamentoRepository.deleteAll();
+        this.usuarioRepository.deleteAll();
     }
 
     @Test
