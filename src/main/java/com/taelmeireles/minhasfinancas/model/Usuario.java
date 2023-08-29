@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -34,6 +36,7 @@ public class Usuario implements Serializable {
     private String email;
 
     @Column(name = "senha")
+    @JsonIgnore
     private String senha;
 
     @Column(name = "data_cadastro")

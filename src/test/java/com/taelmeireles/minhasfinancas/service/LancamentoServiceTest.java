@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,10 +37,10 @@ import com.taelmeireles.minhasfinancas.util.UsuarioUtil;
 @ActiveProfiles("test")
 class LancamentoServiceTest {
     
-    @Autowired
+    @SpyBean
     private LancamentoService service;
     
-    @Autowired
+    @SpyBean
     private UsuarioRepository usuarioRepository;
     
     @SpyBean
@@ -96,9 +95,50 @@ class LancamentoServiceTest {
     }
 
     @Test
-    void testAtualizarStatus() {
+    void testAtualizarStatus_DeveRetornarVoid_QuandoAtualizacaoForBemSucedida() {
+        Usuario usuario = UsuarioUtil.getUsuario();
+        this.usuarioRepository.save(usuario);
 
-        Assertions.assertTrue(false);
+        Lancamento lancamento = LancamentoUtil.getLancamento();
+        lancamento.setUsuario(usuario);
+        this.lancamentoRepository.save(lancamento);
+
+        this.service.atualizarStatus(lancamento.getId(), "EFETIVADO");
+
+        Lancamento lancamentoSalvo = this.lancamentoRepository.findById(lancamento.getId()).get();
+
+        Assertions.assertNotNull(lancamentoSalvo);
+        Assertions.assertEquals(StatusLancamento.EFETIVADO, lancamentoSalvo.getStatus());
+        
+        Mockito.verify(this.service, times(1)).buscarPorId(any());
+        Mockito.verify(this.service, times(1)).atualizar(any());
+        Mockito.verify(this.lancamentoRepository, times(2)).save(any());
+
+    }
+
+    @Test
+    void testAtualizarStatus_DeveRetornarException_QuandoStatusInformadoForErrado() {
+
+        Assertions.assertThrows(Exception.class, 
+            () -> this.service.atualizarStatus(new Lancamento().getId(), "ERRADO"));
+        
+        Mockito.verify(this.service, times(0)).buscarPorId(any());
+        Mockito.verify(this.service, times(0)).atualizar(any());
+        Mockito.verify(this.lancamentoRepository, times(0)).save(any());
+
+    }
+
+    @Test
+    void testAtualizarStatus_DeveRetornarException_QuandoLancamentoNaoExistirId() {
+
+        Assertions.assertThrows(Exception.class, 
+            () -> this.service.atualizarStatus(new Lancamento().getId(), StatusLancamento.PENDENTE.name()));
+        
+        Mockito.verify(this.service, times(1)).buscarPorId(any());
+        Mockito.verify(this.service, times(0)).atualizar(any());
+        Mockito.verify(this.lancamentoRepository, times(0)).save(any());
+        Mockito.verify(this.lancamentoRepository, times(1)).findById(any());
+
     }
 
     @Test
@@ -148,9 +188,33 @@ class LancamentoServiceTest {
     }   
 
     @Test
-    void testBuscarPorId() {
+    void testBuscarPorId_DeveRetornarLancamento_QuandoLancamentoExistirNaBase() {
+        Usuario usuario = UsuarioUtil.getUsuario();
+        this.usuarioRepository.save(usuario);
 
-        Assertions.assertTrue(false);
+        Lancamento lancamento = LancamentoUtil.getLancamento();
+        lancamento.setUsuario(usuario);
+        this.lancamentoRepository.save(lancamento);
+
+        LancamentoDto lacamentoEncontrado = this.service.buscarPorId(lancamento.getId());
+
+        Assertions.assertNotNull(lacamentoEncontrado);
+        Assertions.assertNotNull(lacamentoEncontrado.getId());
+        
+        Mockito.verify(this.lancamentoRepository, times(1)).findById(any());
+    }
+
+    @Test
+    void testBuscarPorId_DeveRetornarException_QuandoLancamentoNaoExistirNaBase() {
+        Lancamento lancamento = LancamentoUtil.getLancamento();
+        lancamento.setId(UUID.randomUUID());
+
+        Assertions.assertThrowsExactly(RegraNegocioException.class, 
+            () -> this.service.buscarPorId(lancamento.getId()), 
+            "Lançamento não encontrado pelo 'ID' informado.");
+
+        Mockito.verify(this.lancamentoRepository, times(1)).findById(any(UUID.class));
+
     }
 
     @Test
@@ -188,11 +252,41 @@ class LancamentoServiceTest {
     }
 
     @Test
-    void testObterSaldoPorUsuario() {
+    void testObterSaldoPorUsuario_DeveRetornarSaldo_QuandoTudoEstiverOk() {
+        Usuario usuario = UsuarioUtil.getUsuario();
+        this.usuarioRepository.save(usuario);
 
-        Assertions.assertTrue(false);
+        Lancamento lancamentoDespesa = LancamentoUtil.getLancamento();
+        lancamentoDespesa.setUsuario(usuario);
+        lancamentoDespesa.setValor(BigDecimal.valueOf(500));
+        lancamentoDespesa.setTipo(TipoLancamento.DESPESA);
+        lancamentoDespesa.setStatus(StatusLancamento.EFETIVADO);
+
+        Lancamento lancamentoReceita = LancamentoUtil.getLancamento();
+        lancamentoReceita.setUsuario(usuario);
+        lancamentoReceita.setValor(BigDecimal.valueOf(1000));
+        lancamentoReceita.setTipo(TipoLancamento.RECEITA);
+        lancamentoReceita.setStatus(StatusLancamento.EFETIVADO);
+
+        Lancamento lancamentoReceita2 = LancamentoUtil.getLancamento();
+        lancamentoReceita2.setUsuario(usuario);
+        lancamentoReceita2.setValor(BigDecimal.valueOf(1000));
+        lancamentoReceita2.setTipo(TipoLancamento.RECEITA);
+        lancamentoReceita2.setStatus(StatusLancamento.EFETIVADO);
+
+        this.lancamentoRepository.save(lancamentoDespesa);
+        this.lancamentoRepository.save(lancamentoReceita);
+        this.lancamentoRepository.save(lancamentoReceita2);
+
+        BigDecimal saldoFinal = this.service.obterSaldoPorUsuario(usuario.getId());
+
+        Assertions.assertEquals(1500, saldoFinal.intValue());
+
+        Mockito.verify(this.lancamentoRepository, times(2))
+            .obterSaldoPorTipoLancamentoEUsuario(any(), any());
+        
     }
-
+    
     @Test
     void testSalvar_DeveSalvarLancamento_QuandoLancamentoIdNaoExistirEUsuarioExistirId() {
         Usuario usuario = UsuarioUtil.getUsuario();
