@@ -57,8 +57,9 @@ public class Lancamento implements Serializable {
     private StatusLancamento status;
 
     @Column(name = "data_cadastro")
-    private LocalDate dataCadastro;
-
+    @Builder.Default
+    private LocalDate dataCadastro = LocalDate.now();
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario")
     private Usuario usuario;

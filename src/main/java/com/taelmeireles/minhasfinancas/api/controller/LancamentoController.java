@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.taelmeireles.minhasfinancas.dto.LancamentoDto;
+import com.taelmeireles.minhasfinancas.enums.TipoLancamento;
 import com.taelmeireles.minhasfinancas.service.LancamentoService;
 
 import lombok.RequiredArgsConstructor;
@@ -31,15 +32,17 @@ public class LancamentoController {
     @GetMapping
     public ResponseEntity<?> buscar(@RequestParam(value = "descricao", required = false) String descricao, 
                                     @RequestParam(value = "mes", required = false) Integer mes, 
-                                    @RequestParam(value = "ano", required = false) Integer ano, 
+                                    @RequestParam(value = "ano", required = false) Integer ano,
+                                    @RequestParam(value = "tipo", required = false) TipoLancamento tipo, 
                                     @RequestParam(value = "usuarioId", required = true) UUID usuarioId) {
         
         LancamentoDto lancamentoDto = LancamentoDto.builder().build();
         lancamentoDto.setDescricao(descricao);
         lancamentoDto.setAno(ano);
         lancamentoDto.setMes(mes);
+        lancamentoDto.setTipo(tipo);
         lancamentoDto.setUsuarioId(usuarioId);
-
+        
         List<LancamentoDto> lancamentoDtoList = this.service.buscar(lancamentoDto);      
         return ResponseEntity.status(HttpStatus.OK).body(lancamentoDtoList);
     }

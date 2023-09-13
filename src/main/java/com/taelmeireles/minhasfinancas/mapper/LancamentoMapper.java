@@ -1,7 +1,5 @@
 package com.taelmeireles.minhasfinancas.mapper;
 
-import java.time.LocalDate;
-
 import com.taelmeireles.minhasfinancas.dto.LancamentoDto;
 import com.taelmeireles.minhasfinancas.model.Lancamento;
 import com.taelmeireles.minhasfinancas.model.Usuario;
@@ -20,7 +18,6 @@ public class LancamentoMapper {
             .valor(dto.getValor())
             .tipo(dto.getTipo())
             .status(dto.getStatus())
-            .dataCadastro(LocalDate.now())
             .usuario(usuario)
             .build();
     }
