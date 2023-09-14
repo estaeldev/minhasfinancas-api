@@ -90,6 +90,41 @@ class LancamentoControllerTest {
     }
 
     @Test
+    void testBuscarPorId() throws Exception {
+
+        Usuario usuario = new Usuario();
+        usuario.setId(UUID.randomUUID());
+
+        LancamentoDto lancamentoDto = LancamentoDto.builder()
+            .id(UUID.randomUUID())
+            .descricao("teste")
+            .mes(1)
+            .ano(2023)
+            .valor(BigDecimal.valueOf(500))
+            .tipo(TipoLancamento.RECEITA)
+            .status(StatusLancamento.PENDENTE)
+            .usuarioId(usuario.getId())
+            .build();
+        
+        Mockito.when(this.lancamentoService.buscarPorId(any(UUID.class))).thenReturn(lancamentoDto);
+        
+        String json = new ObjectMapper().writeValueAsString(lancamentoDto);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get(API_URL+"/{id}", lancamentoDto.getId())
+            .accept(JSON_VALUE)
+            .contentType(JSON_VALUE)
+            .content(json)
+        ).andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(result -> Assertions.assertEquals(0, result.getResponse().getContentLength()))
+            .andExpect(MockMvcResultMatchers.jsonPath("id").value(lancamentoDto.getId().toString()))
+            .andExpect(MockMvcResultMatchers.jsonPath("usuarioId").value(usuario.getId().toString()))
+            .andExpect(result -> Assertions.assertEquals(json, result.getResponse().getContentAsString()));
+        
+        Mockito.verify(this.lancamentoService, times(1)).buscarPorId(any(UUID.class));
+
+    }
+
+    @Test
     void testBuscar() throws Exception {
         
         Mockito.when(this.lancamentoService.buscar(any(LancamentoDto.class)))

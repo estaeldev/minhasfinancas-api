@@ -47,6 +47,12 @@ public class LancamentoController {
         return ResponseEntity.status(HttpStatus.OK).body(lancamentoDtoList);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> buscarPorId(@PathVariable("id") UUID id) {
+        LancamentoDto lancamentoDto = this.service.buscarPorId(id);
+        return ResponseEntity.status(HttpStatus.OK).body(lancamentoDto);
+    }
+    
     @PostMapping
     public ResponseEntity<?> salvar(@RequestBody LancamentoDto dto) {
         LancamentoDto lancamentoDto = this.service.salvar(dto);

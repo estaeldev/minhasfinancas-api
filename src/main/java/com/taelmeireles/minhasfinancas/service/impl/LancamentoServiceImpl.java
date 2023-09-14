@@ -72,6 +72,7 @@ public class LancamentoServiceImpl implements LancamentoService {
         Lancamento lancamentoFiltro = LancamentoMapper.fromDtoToEntity(dto, usuario);
 
         Example<Lancamento> example = Example.of(lancamentoFiltro, ExampleMatcher.matching()
+            .withIgnorePaths("dataCadastro")
             .withIgnoreCase()
             .withStringMatcher(StringMatcher.CONTAINING));
 
