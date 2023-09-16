@@ -12,7 +12,11 @@ import com.taelmeireles.minhasfinancas.model.Lancamento;
 
 public interface LancamentoRepository extends JpaRepository<Lancamento, UUID> {
     
-    @Query("SELECT sum(l.valor) FROM Lancamento l JOIN l.usuario u WHERE u.id = :usuarioId AND l.tipo = :tipo GROUP BY u")
+    @Query("SELECT sum(l.valor) FROM Lancamento l JOIN l.usuario u "
+         + " WHERE u.id = :usuarioId "
+         + " AND l.tipo = :tipo "
+         + " AND l.status = EFETIVADO"
+         + " GROUP BY u")
     BigDecimal obterSaldoPorTipoLancamentoEUsuario(@Param("usuarioId") UUID usuarioId, @Param("tipo") TipoLancamento tipo);
 
 }
