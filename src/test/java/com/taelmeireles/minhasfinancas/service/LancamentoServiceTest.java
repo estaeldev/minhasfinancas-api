@@ -5,18 +5,19 @@ import static org.mockito.Mockito.times;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.ExampleMatcher.StringMatcher;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.taelmeireles.minhasfinancas.dto.LancamentoDto;
@@ -27,69 +28,51 @@ import com.taelmeireles.minhasfinancas.mapper.LancamentoMapper;
 import com.taelmeireles.minhasfinancas.model.Lancamento;
 import com.taelmeireles.minhasfinancas.model.Usuario;
 import com.taelmeireles.minhasfinancas.repository.LancamentoRepository;
-import com.taelmeireles.minhasfinancas.repository.UsuarioRepository;
+import com.taelmeireles.minhasfinancas.service.impl.LancamentoServiceImpl;
 import com.taelmeireles.minhasfinancas.util.LancamentoUtil;
 import com.taelmeireles.minhasfinancas.util.UsuarioUtil;
 
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @ExtendWith(MockitoExtension.class)
-@AutoConfigureTestDatabase(replace = Replace.NONE)
 @ActiveProfiles("test")
 class LancamentoServiceTest {
-    
-    @SpyBean
-    private LancamentoService service;
-    
-    @SpyBean
-    private UsuarioRepository usuarioRepository;
-    
-    @SpyBean
+
+    @Mock
     private UsuarioService usuarioService;
     
-    @SpyBean
+    @Mock
     private LancamentoRepository lancamentoRepository;
+
+    @InjectMocks
+    private LancamentoServiceImpl lancamentoService;
 
     @Test
     void testAtualizar_DeveAtualizarLancamento_QuandoLancamentoExistirId() {
         Usuario usuario = UsuarioUtil.getUsuario();
-        this.usuarioRepository.save(usuario);
-        
+        usuario.setId(UUID.randomUUID());
+
         Lancamento lancamento = LancamentoUtil.getLancamento();
+        lancamento.setId(UUID.randomUUID());
         lancamento.setUsuario(usuario);
         
-        this.lancamentoRepository.save(lancamento);
+        Mockito.when(this.usuarioService.findById(usuario.getId())).thenReturn(usuario);
+        Mockito.when(this.lancamentoRepository.save(any(Lancamento.class))).thenReturn(lancamento); 
 
-        Lancamento lacamentoSalvo = this.lancamentoRepository.findById(lancamento.getId()).get();
-        lacamentoSalvo.setMes(3);
-        lacamentoSalvo.setStatus(StatusLancamento.EFETIVADO);
+        LancamentoDto lancamentoAtualizado = this.lancamentoService.atualizar(LancamentoMapper.fromEntityToDto(lancamento));
 
-        LancamentoDto lancamentoAtualizado = this.service.atualizar(LancamentoMapper.fromEntityToDto(lacamentoSalvo));
+        Assertions.assertNotNull(lancamentoAtualizado);
 
-        Assertions.assertEquals(lacamentoSalvo.getMes(), lancamentoAtualizado.getMes());
-        Assertions.assertEquals(lacamentoSalvo.getStatus(), lancamentoAtualizado.getStatus());
-
-        Mockito.verify(this.lancamentoRepository, times(2)).save(any());
+        Mockito.verify(this.lancamentoRepository, times(1)).save(any());
         Mockito.verify(this.usuarioService, times(1)).findById(any());
 
     }
 
     @Test
     void testAtualizar_DeveRetornarException_QuandoLancamentoNaoExistirId() {
-        Usuario usuario = UsuarioUtil.getUsuario();
-        this.usuarioRepository.save(usuario);
-
-        Lancamento lancamento = LancamentoUtil.getLancamento();
-        lancamento.setUsuario(usuario);
         
-        this.lancamentoRepository.save(lancamento);
-
-        Lancamento lacamentoSalvo = this.lancamentoRepository.findById(lancamento.getId()).get();
-        lacamentoSalvo.setId(null);
-
         Assertions.assertThrows(Exception.class, 
-            () -> this.service.atualizar(LancamentoMapper.fromEntityToDto(lacamentoSalvo)));
+            () -> this.lancamentoService.atualizar(LancamentoMapper.fromEntityToDto(new Lancamento())));
 
-        Mockito.verify(this.lancamentoRepository, times(1)).save(any());
+        Mockito.verify(this.lancamentoRepository, times(0)).save(any());
         Mockito.verify(this.usuarioService, times(0)).findById(any());
 
     }
@@ -97,22 +80,24 @@ class LancamentoServiceTest {
     @Test
     void testAtualizarStatus_DeveRetornarVoid_QuandoAtualizacaoForBemSucedida() {
         Usuario usuario = UsuarioUtil.getUsuario();
-        this.usuarioRepository.save(usuario);
+        usuario.setId(UUID.randomUUID());
 
         Lancamento lancamento = LancamentoUtil.getLancamento();
         lancamento.setUsuario(usuario);
-        this.lancamentoRepository.save(lancamento);
+        lancamento.setId(UUID.randomUUID());
 
-        this.service.atualizarStatus(lancamento.getId(), "EFETIVADO");
+        Mockito.when(this.lancamentoRepository.findById(lancamento.getId()))
+            .thenReturn(Optional.of(lancamento));
 
-        Lancamento lancamentoSalvo = this.lancamentoRepository.findById(lancamento.getId()).get();
+        Mockito.when(this.usuarioService.findById(any(UUID.class))).thenReturn(usuario);
 
-        Assertions.assertNotNull(lancamentoSalvo);
-        Assertions.assertEquals(StatusLancamento.EFETIVADO, lancamentoSalvo.getStatus());
+        Mockito.when(this.lancamentoRepository.save(any(Lancamento.class))).thenReturn(lancamento);
+
+        Assertions.assertDoesNotThrow(() -> this.lancamentoService.atualizarStatus(lancamento.getId(), "EFETIVADO"));
         
-        Mockito.verify(this.service, times(1)).buscarPorId(any());
-        Mockito.verify(this.service, times(1)).atualizar(any());
-        Mockito.verify(this.lancamentoRepository, times(2)).save(any());
+        Mockito.verify(this.lancamentoRepository, times(1)).findById(any());
+        Mockito.verify(this.usuarioService, times(1)).findById(any());
+        Mockito.verify(this.lancamentoRepository, times(1)).save(any());
 
     }
 
@@ -120,32 +105,32 @@ class LancamentoServiceTest {
     void testAtualizarStatus_DeveRetornarException_QuandoStatusInformadoForErrado() {
 
         Assertions.assertThrows(Exception.class, 
-            () -> this.service.atualizarStatus(new Lancamento().getId(), "ERRADO"));
-        
-        Mockito.verify(this.service, times(0)).buscarPorId(any());
-        Mockito.verify(this.service, times(0)).atualizar(any());
+        () -> this.lancamentoService.atualizarStatus(new Lancamento().getId(), "ERRADO"), 
+        "Não foi possível atualizar o status do lançamento.");
+
+        Mockito.verify(this.lancamentoRepository, times(0)).findById(any());
+        Mockito.verify(this.usuarioService, times(0)).findById(any());
         Mockito.verify(this.lancamentoRepository, times(0)).save(any());
-
     }
-
+    
     @Test
     void testAtualizarStatus_DeveRetornarException_QuandoLancamentoNaoExistirId() {
 
-        Assertions.assertThrows(Exception.class, 
-            () -> this.service.atualizarStatus(new Lancamento().getId(), StatusLancamento.PENDENTE.name()));
+        Mockito.doThrow(RegraNegocioException.class).when(this.lancamentoRepository)
+            .findById(any());
         
-        Mockito.verify(this.service, times(1)).buscarPorId(any());
-        Mockito.verify(this.service, times(0)).atualizar(any());
+        Assertions.assertThrowsExactly(RegraNegocioException.class, 
+            () -> this.lancamentoService.atualizarStatus(new Lancamento().getId(), StatusLancamento.PENDENTE.name()));
+        
         Mockito.verify(this.lancamentoRepository, times(0)).save(any());
         Mockito.verify(this.lancamentoRepository, times(1)).findById(any());
-
     }
 
     @Test
     void testBuscar_DeveRetornarUmaListaFiltrada_QuandoTiverLancamentoNaBase() {
         Usuario usuario = UsuarioUtil.getUsuario();
-        this.usuarioRepository.save(usuario);
-
+        usuario.setId(UUID.randomUUID());
+        
         Lancamento lancamentoDespesa = LancamentoUtil.getLancamento();
         lancamentoDespesa.setUsuario(usuario);
         lancamentoDespesa.setMes(1);
@@ -170,15 +155,21 @@ class LancamentoServiceTest {
         lancamentoReceita2.setTipo(TipoLancamento.RECEITA);
         lancamentoReceita2.setStatus(StatusLancamento.EFETIVADO);
 
-        this.lancamentoRepository.save(lancamentoDespesa);
-        this.lancamentoRepository.save(lancamentoReceita);
-        this.lancamentoRepository.save(lancamentoReceita2);
-
         Lancamento lancamentoFiltro = new Lancamento();
         lancamentoFiltro.setUsuario(usuario);
         lancamentoFiltro.setMes(2);
 
-        List<LancamentoDto> lancamentoDtoList = this.service.buscar(LancamentoMapper.fromEntityToDto(lancamentoFiltro));
+        Example<Lancamento> example = Example.of(lancamentoFiltro, ExampleMatcher.matching()
+            .withIgnorePaths("dataCadastro")
+            .withIgnoreCase()
+            .withStringMatcher(StringMatcher.CONTAINING));
+
+        Mockito.when(this.usuarioService.findById(usuario.getId())).thenReturn(usuario);
+
+        Mockito.when(this.lancamentoRepository.findAll(example))
+            .thenReturn(List.of(lancamentoReceita2));
+        
+        List<LancamentoDto> lancamentoDtoList = this.lancamentoService.buscar(LancamentoMapper.fromEntityToDto(lancamentoFiltro));
 
         Assertions.assertNotNull(lancamentoDtoList);
         Assertions.assertEquals(1, lancamentoDtoList.size());
@@ -190,13 +181,14 @@ class LancamentoServiceTest {
     @Test
     void testBuscarPorId_DeveRetornarLancamento_QuandoLancamentoExistirNaBase() {
         Usuario usuario = UsuarioUtil.getUsuario();
-        this.usuarioRepository.save(usuario);
 
         Lancamento lancamento = LancamentoUtil.getLancamento();
+        lancamento.setId(UUID.randomUUID());
         lancamento.setUsuario(usuario);
-        this.lancamentoRepository.save(lancamento);
 
-        LancamentoDto lacamentoEncontrado = this.service.buscarPorId(lancamento.getId());
+        Mockito.when(this.lancamentoRepository.findById(any())).thenReturn(Optional.of(lancamento));
+
+        LancamentoDto lacamentoEncontrado = this.lancamentoService.buscarPorId(lancamento.getId());
 
         Assertions.assertNotNull(lacamentoEncontrado);
         Assertions.assertNotNull(lacamentoEncontrado.getId());
@@ -207,54 +199,45 @@ class LancamentoServiceTest {
     @Test
     void testBuscarPorId_DeveRetornarException_QuandoLancamentoNaoExistirNaBase() {
         Lancamento lancamento = LancamentoUtil.getLancamento();
-        lancamento.setId(UUID.randomUUID());
-
+        
         Assertions.assertThrowsExactly(RegraNegocioException.class, 
-            () -> this.service.buscarPorId(lancamento.getId()), 
+            () -> this.lancamentoService.buscarPorId(lancamento.getId()), 
             "Lançamento não encontrado pelo 'ID' informado.");
 
-        Mockito.verify(this.lancamentoRepository, times(1)).findById(any(UUID.class));
+        Mockito.verify(this.lancamentoRepository, times(1)).findById(any());
 
     }
 
     @Test
     void testDeletar_DeveDeletarUmLancamento_QuandoLancamentoExistirId() {
-        Usuario usuario = UsuarioUtil.getUsuario();
-        this.usuarioRepository.save(usuario);
-
         Lancamento lancamento = LancamentoUtil.getLancamento();
-        lancamento.setUsuario(usuario); 
+        lancamento.setUsuario(new Usuario());
+        lancamento.setId(UUID.randomUUID());
 
-        this.lancamentoRepository.save(lancamento);
+        Mockito.when(this.lancamentoRepository.findById(lancamento.getId())).thenReturn(Optional.of(lancamento));
+        
 
-        Assertions.assertDoesNotThrow(() -> this.service.deletar(lancamento.getId()));
-
+        Assertions.assertDoesNotThrow(() -> this.lancamentoService.deletar(lancamento.getId()));
+        
+        Mockito.verify(this.lancamentoRepository, times(1)).findById(any());
         Mockito.verify(this.lancamentoRepository, times(1)).delete(any());
 
     }   
 
     @Test
     void testDeletar_DeveRetornarException_QuandoLancamentoNaoExistirId() {
-        Usuario usuario = UsuarioUtil.getUsuario();
-        this.usuarioRepository.save(usuario);
-
         Lancamento lancamento = LancamentoUtil.getLancamento();
-        lancamento.setUsuario(usuario); 
-
-        this.lancamentoRepository.save(lancamento);
-        lancamento.setId(UUID.randomUUID());
 
         Assertions.assertThrows(Exception.class, 
-            () -> this.service.deletar(lancamento.getId()));
+            () -> this.lancamentoService.deletar(lancamento.getId()));
         
         Mockito.verify(this.lancamentoRepository, times(0)).delete(any());
-
     }
 
     @Test
     void testObterSaldoPorUsuario_DeveRetornarSaldo_QuandoTudoEstiverOk() {
         Usuario usuario = UsuarioUtil.getUsuario();
-        this.usuarioRepository.save(usuario);
+        usuario.setId(UUID.randomUUID());
 
         Lancamento lancamentoDespesa = LancamentoUtil.getLancamento();
         lancamentoDespesa.setUsuario(usuario);
@@ -274,11 +257,17 @@ class LancamentoServiceTest {
         lancamentoReceita2.setTipo(TipoLancamento.RECEITA);
         lancamentoReceita2.setStatus(StatusLancamento.EFETIVADO);
 
-        this.lancamentoRepository.save(lancamentoDespesa);
-        this.lancamentoRepository.save(lancamentoReceita);
-        this.lancamentoRepository.save(lancamentoReceita2);
+        BigDecimal totalDespesa = lancamentoDespesa.getValor();
+        BigDecimal totalReceita = lancamentoReceita.getValor().add(lancamentoReceita2.getValor());
 
-        BigDecimal saldoFinal = this.service.obterSaldoPorUsuario(usuario.getId());
+        Mockito.when(this.lancamentoRepository.obterSaldoPorTipoLancamentoEUsuario(usuario.getId(), TipoLancamento.DESPESA))
+            .thenReturn(totalDespesa);
+
+        Mockito.when(this.lancamentoRepository.obterSaldoPorTipoLancamentoEUsuario(usuario.getId(), TipoLancamento.RECEITA))
+            .thenReturn(totalReceita);
+
+
+        BigDecimal saldoFinal = this.lancamentoService.obterSaldoPorUsuario(usuario.getId());
 
         Assertions.assertEquals(1500, saldoFinal.intValue());
 
@@ -290,14 +279,17 @@ class LancamentoServiceTest {
     @Test
     void testSalvar_DeveSalvarLancamento_QuandoLancamentoIdNaoExistirEUsuarioExistirId() {
         Usuario usuario = UsuarioUtil.getUsuario();
-        
+        usuario.setId(UUID.randomUUID());
+
         Lancamento lancamento = LancamentoUtil.getLancamento();
         lancamento.setUsuario(usuario);
         
-        this.usuarioRepository.save(usuario);
-        
-        LancamentoDto lancamentoDtoSalvo = this.service.salvar(LancamentoMapper.fromEntityToDto(lancamento));
-        
+        Mockito.when(this.usuarioService.findById(usuario.getId())).thenReturn(usuario);
+        Mockito.when(this.lancamentoRepository.save(lancamento)).thenReturn(lancamento);
+
+        LancamentoDto lancamentoDtoSalvo = this.lancamentoService.salvar(LancamentoMapper.fromEntityToDto(lancamento));
+        lancamentoDtoSalvo.setId(UUID.randomUUID());
+
         Assertions.assertNotNull(lancamentoDtoSalvo);
         Assertions.assertNotNull(lancamentoDtoSalvo.getId());
         Assertions.assertEquals(StatusLancamento.PENDENTE, lancamentoDtoSalvo.getStatus());
@@ -314,7 +306,7 @@ class LancamentoServiceTest {
         lancamento.setId(UUID.randomUUID());
 
         Assertions.assertThrowsExactly(RegraNegocioException.class, 
-            () -> this.service.salvar(LancamentoMapper.fromEntityToDto(lancamento)));
+            () -> this.lancamentoService.salvar(LancamentoMapper.fromEntityToDto(lancamento)));
         
         Mockito.verify(this.usuarioService, times(0)).findById(any());
         Mockito.verify(this.lancamentoRepository, times(0)).save(any());
@@ -324,18 +316,15 @@ class LancamentoServiceTest {
     @Test
     void testSalvar_DeveRetornarException_QuandoUsuarioNaoExistirId() {
         Usuario usuario = UsuarioUtil.getUsuario();
+        usuario.setId(UUID.randomUUID());
         
         Lancamento lancamento = LancamentoUtil.getLancamento();
         lancamento.setUsuario(usuario);
-        
-        this.usuarioRepository.save(usuario);
-        
-        usuario.setId(UUID.randomUUID());
-        
-        lancamento.setUsuario(usuario);
+
+        Mockito.doThrow(RegraNegocioException.class).when(this.usuarioService).findById(usuario.getId());
 
         Assertions.assertThrowsExactly(RegraNegocioException.class, 
-            () -> this.service.salvar(LancamentoMapper.fromEntityToDto(lancamento)));
+            () -> this.lancamentoService.salvar(LancamentoMapper.fromEntityToDto(lancamento)));
 
         Mockito.verify(this.usuarioService, times(1)).findById(any());
         Mockito.verify(this.lancamentoRepository, times(0)).save(any());

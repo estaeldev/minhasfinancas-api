@@ -1,6 +1,7 @@
 package com.taelmeireles.minhasfinancas.repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
@@ -17,7 +18,6 @@ import com.taelmeireles.minhasfinancas.enums.TipoLancamento;
 import com.taelmeireles.minhasfinancas.model.Lancamento;
 import com.taelmeireles.minhasfinancas.model.Usuario;
 import com.taelmeireles.minhasfinancas.util.LancamentoUtil;
-import com.taelmeireles.minhasfinancas.util.UsuarioUtil;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = Replace.NONE)
@@ -40,6 +40,8 @@ class LancamentoRepositoryTest {
 
     @Test
     void testDelete_DeveExcluirLancamento_QuandoIdForValido() {
+        this.entityManager.clear();
+
         Lancamento lancamento = LancamentoUtil.getLancamento();
         this.entityManager.persist(lancamento);
 
@@ -55,6 +57,8 @@ class LancamentoRepositoryTest {
 
     @Test
     void testSave_DeveAtualizarLancamento_QuandoIdForValido() {
+        this.entityManager.clear();
+
         Lancamento lancamento = LancamentoUtil.getLancamento();
         lancamento = this.entityManager.persist(lancamento);
 
@@ -77,6 +81,8 @@ class LancamentoRepositoryTest {
 
     @Test
     void testFindByid_DeveBuscarLancamentoPorId_QuandoIdForValido() {
+        this.entityManager.clear();
+
         Lancamento lancamento = LancamentoUtil.getLancamento();
         this.entityManager.persist(lancamento);
 
@@ -89,27 +95,45 @@ class LancamentoRepositoryTest {
 
     @Test
     void testObterSaldoPorTipoLancamentoEUsuario() {
-        Usuario usuario = UsuarioUtil.getUsuario();
-
-        Lancamento lancamentoDespesa = LancamentoUtil.getLancamento();
+        this.entityManager.clear();
+        
+        Usuario usuario = new Usuario();
+        usuario.setDataCadastro(LocalDate.now());
+        usuario.setEmail("teste@gmail.com");
+        usuario.setNome("Teste");
+        usuario.setSenha("senha");
+        this.entityManager.persist(usuario);
+        
+        Lancamento lancamentoDespesa = new Lancamento();
+        lancamentoDespesa.setId(null);
         lancamentoDespesa.setValor(BigDecimal.valueOf(500));
+        lancamentoDespesa.setAno(2023);
+        lancamentoDespesa.setDescricao("Despesa Qualquer");
+        lancamentoDespesa.setMes(1);
         lancamentoDespesa.setStatus(StatusLancamento.EFETIVADO);
         lancamentoDespesa.setTipo(TipoLancamento.DESPESA);
         lancamentoDespesa.setUsuario(usuario);
 
-        Lancamento lancamentoReceita = LancamentoUtil.getLancamento();
+        Lancamento lancamentoReceita = new Lancamento();
+        lancamentoReceita.setId(null);
         lancamentoReceita.setValor(BigDecimal.valueOf(1000));
+        lancamentoReceita.setAno(2023);
+        lancamentoReceita.setDescricao("Receita Qualquer");
+        lancamentoReceita.setMes(2);
         lancamentoReceita.setStatus(StatusLancamento.EFETIVADO);
         lancamentoReceita.setTipo(TipoLancamento.RECEITA);
         lancamentoReceita.setUsuario(usuario);
 
-        Lancamento lancamentoReceita2 = LancamentoUtil.getLancamento();
+        Lancamento lancamentoReceita2 = new Lancamento();
+        lancamentoReceita2.setId(null);
         lancamentoReceita2.setValor(BigDecimal.valueOf(1000));
+        lancamentoReceita2.setAno(2023);
+        lancamentoReceita2.setDescricao("Receita Qualquer 2");
+        lancamentoReceita2.setMes(2);
         lancamentoReceita2.setStatus(StatusLancamento.EFETIVADO);
         lancamentoReceita2.setTipo(TipoLancamento.RECEITA);
         lancamentoReceita2.setUsuario(usuario);
-
-        this.entityManager.persist(usuario);
+        
         this.entityManager.persist(lancamentoDespesa);
         this.entityManager.persist(lancamentoReceita);
         this.entityManager.persist(lancamentoReceita2);
