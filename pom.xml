@@ -11,7 +11,7 @@
 	
 	<groupId>com.taelmeireles</groupId>
 	<artifactId>minhasfinancas</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>minhasfinancas</name>
 	<description>Projeto para gerenciamento de finanças pessoais</description>
 
@@ -55,6 +55,7 @@
 	</dependencies>
 
 	<build>
+		<finalName>minhasfinancas${project.version}</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
