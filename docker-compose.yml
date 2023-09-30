@@ -13,21 +13,6 @@ services:
     networks:
       - minhasfinancas
 
-  java_app:
-    image: minhasfinancas:${APP_VERSION}
-    container_name: java_app
-    build: .
-    environment:
-      - DB_HOST=jdbc:postgresql://postgres:5432/minhasfinancas
-      - DB_USERNAME=${POSTGRES_USER}
-      - DB_PASSWORD=${POSTGRES_PASSWORD}
-    ports:
-      - 9000:9000
-    depends_on:
-      - postgres
-    networks:
-      - minhasfinancas
-
 volumes:
   postgres-db:
     external: true
