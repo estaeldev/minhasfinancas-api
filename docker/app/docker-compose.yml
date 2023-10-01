@@ -1,0 +1,22 @@
+services:
+
+  app:
+    image: minhasfinancas:1.0.0
+    container_name: app
+    build: 
+      context: ../../
+      dockerfile: ./docker/Dockerfile
+    ports:
+      - 9000:9000
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+    networks:
+      - minhasfinancas
+
+networks:
+  minhasfinancas:
+    external: true

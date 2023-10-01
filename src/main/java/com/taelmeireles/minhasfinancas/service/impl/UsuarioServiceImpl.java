@@ -4,6 +4,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional(readOnly = true)
@@ -31,10 +33,10 @@ public class UsuarioServiceImpl implements UsuarioService {
             throw new AutenticacaoException("Usuário não encontrado pelo email informado.");
         }
         
-        if(!usuarioOpt.get().getSenha().equals(senha)) {
+        if(!this.passwordEncoder.matches(senha, usuarioOpt.get().getSenha())) {
             throw new AutenticacaoException("Senha inválida.");
         }
-
+        
         return usuarioOpt.get();
 
     }
@@ -43,6 +45,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional
     public Usuario save(Usuario usuario) {
         validarEmail(usuario.getEmail());
+        usuario.setSenha(this.passwordEncoder.encode(usuario.getSenha()));
         return this.usuarioRepository.save(usuario);
     }
     
