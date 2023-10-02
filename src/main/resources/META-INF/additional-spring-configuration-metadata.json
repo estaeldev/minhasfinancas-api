@@ -1,0 +1,12 @@
+{"properties": [
+  {
+    "name": "token.jwt.chave-assinatura",
+    "type": "java.lang.String",
+    "description": "A description for 'token.jwt.chave-assinatura'"
+  },
+  {
+    "name": "token.jwt.expiracao",
+    "type": "java.lang.String",
+    "description": "A description for 'token.jwt.expiracao'"
+  }
+]}

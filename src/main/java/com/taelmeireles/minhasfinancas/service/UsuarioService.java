@@ -2,11 +2,12 @@ package com.taelmeireles.minhasfinancas.service;
 
 import java.util.UUID;
 
+import com.taelmeireles.minhasfinancas.dto.TokenJwtDto;
 import com.taelmeireles.minhasfinancas.model.Usuario;
 
 public interface UsuarioService {
     
-    Usuario authenticate(String email, String senha);
+    TokenJwtDto authenticate(String email, String senha);
 
     Usuario save(Usuario usuario);
 

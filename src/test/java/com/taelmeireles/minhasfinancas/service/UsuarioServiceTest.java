@@ -16,6 +16,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.taelmeireles.minhasfinancas.dto.TokenJwtDto;
 import com.taelmeireles.minhasfinancas.exception.AutenticacaoException;
 import com.taelmeireles.minhasfinancas.exception.RegraNegocioException;
 import com.taelmeireles.minhasfinancas.model.Usuario;
@@ -44,10 +45,10 @@ class UsuarioServiceTest {
 
         Mockito.when(this.usuarioRepository.findByEmail(usuario.getEmail())).thenReturn(Optional.of(usuario));
 
-        Usuario usuarioRetornado = this.usuarioService.authenticate(usuario.getEmail(), usuario.getSenha());
+        TokenJwtDto usuarioRetornado = this.usuarioService.authenticate(usuario.getEmail(), usuario.getSenha());
 
         Assertions.assertNotNull(usuarioRetornado);
-        Assertions.assertNotNull(usuarioRetornado.getId());
+        Assertions.assertNotNull(usuarioRetornado.getToken());
         Assertions.assertDoesNotThrow(() -> this.usuarioService.authenticate(usuario.getEmail(), usuario.getSenha()));
 
         Mockito.verify(this.usuarioRepository, times(2)).findByEmail(any());

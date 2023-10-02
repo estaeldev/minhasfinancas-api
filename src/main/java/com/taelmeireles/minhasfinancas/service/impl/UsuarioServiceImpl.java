@@ -8,10 +8,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.taelmeireles.minhasfinancas.dto.TokenJwtDto;
 import com.taelmeireles.minhasfinancas.exception.AutenticacaoException;
 import com.taelmeireles.minhasfinancas.exception.RegraNegocioException;
 import com.taelmeireles.minhasfinancas.model.Usuario;
 import com.taelmeireles.minhasfinancas.repository.UsuarioRepository;
+import com.taelmeireles.minhasfinancas.service.TokenJwtService;
 import com.taelmeireles.minhasfinancas.service.UsuarioService;
 
 import lombok.RequiredArgsConstructor;
@@ -22,10 +24,11 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TokenJwtService tokenJwtService;
 
     @Override
     @Transactional(readOnly = true)
-    public Usuario authenticate(String email, String senha) {
+    public TokenJwtDto authenticate(String email, String senha) {
         
         Optional<Usuario> usuarioOpt = this.usuarioRepository.findByEmail(email);
         
@@ -37,7 +40,12 @@ public class UsuarioServiceImpl implements UsuarioService {
             throw new AutenticacaoException("Senha inválida.");
         }
         
-        return usuarioOpt.get();
+        String token = this.tokenJwtService.gerarToken(usuarioOpt.get());
+
+        return TokenJwtDto.builder()
+            .nome(usuarioOpt.get().getNome())
+            .token(token)
+            .build();
 
     }
     

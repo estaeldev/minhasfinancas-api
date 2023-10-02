@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.taelmeireles.minhasfinancas.dto.TokenJwtDto;
 import com.taelmeireles.minhasfinancas.dto.UsuarioDto;
 import com.taelmeireles.minhasfinancas.mapper.UsuarioMapper;
 import com.taelmeireles.minhasfinancas.model.Usuario;
@@ -37,8 +38,7 @@ public class UsuarioController {
     
     @PostMapping("/auth")
     public ResponseEntity<?> autenticar(@RequestBody UsuarioDto dto) {
-        Usuario usuario = UsuarioMapper.fromDtoToEntity(dto);
-        Usuario usuarioAutenticado = this.usuarioService.authenticate(usuario.getEmail(), usuario.getSenha());
+        TokenJwtDto usuarioAutenticado = this.usuarioService.authenticate(dto.getEmail(), dto.getSenha());
         return ResponseEntity.status(HttpStatus.OK).body(usuarioAutenticado);
     }
     
