@@ -8,7 +8,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.taelmeireles.minhasfinancas.service.TokenJwtService;
@@ -39,16 +38,16 @@ public class TokenJwtFilterConfig extends OncePerRequestFilter {
         
         String token = authorization.split(" ")[1];
 
-        if(Objects.nonNull(token) && Boolean.TRUE.equals(this.tokenJwtService.isTokenValido(token))) {
-            String login = this.tokenJwtService.obterLoginUsuario(token);
+        if(Objects.nonNull(token)) {
+            String login = this.tokenJwtService.validTokenReturnSubject(token);
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(login);
-            UsernamePasswordAuthenticationToken authToken = 
-                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authToken);
+            if(Objects.nonNull(userDetails)) {
+                UsernamePasswordAuthenticationToken authToken = 
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
         }
         
-
         filterChain.doFilter(request, response);
     }
     

@@ -8,7 +8,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.taelmeireles.minhasfinancas.exception.RegraNegocioException;
 import com.taelmeireles.minhasfinancas.model.Usuario;
 import com.taelmeireles.minhasfinancas.repository.UsuarioRepository;
 
@@ -30,7 +29,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             .roles("USER")
             .build()
 
-        ).orElseThrow(() -> new RegraNegocioException("Email não cadastrado!"));
+        ).orElse(null);
     }
     
 }
