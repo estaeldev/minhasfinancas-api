@@ -6,6 +6,7 @@ import java.util.Date;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.taelmeireles.minhasfinancas.exception.AutenticacaoException;
 import com.taelmeireles.minhasfinancas.model.Usuario;
 import com.taelmeireles.minhasfinancas.service.TokenJwtService;
 
@@ -32,15 +33,15 @@ public class TokenJwtServiceImpl implements TokenJwtService {
             .setIssuedAt(new Date(System.currentTimeMillis()))
             .setExpiration(new Date(System.currentTimeMillis() + 1000 * dataExpiracao))
             .setSubject(usuario.getEmail())
-            .signWith(getKey(chaveAssinatura), SignatureAlgorithm.HS256)
+            .signWith(getKey(), SignatureAlgorithm.HS256)
             .compact();
     }
     
     @Override
     public Boolean isTokenValido(String token) {
         Claims claims = obterClaims(token);
-        Date expiration = claims.getExpiration();
-        return new Date(System.currentTimeMillis()).before(expiration);
+        Date dataExpiracao = claims.getExpiration();
+        return dataExpiracao.after(new Date());
     }
     
     @Override
@@ -50,12 +51,17 @@ public class TokenJwtServiceImpl implements TokenJwtService {
     }
     
     private Claims obterClaims(String token) {
-        return Jwts.parserBuilder().setSigningKey(getKey(chaveAssinatura)).build().parseClaimsJws(token).getBody();
+        try {
+            return Jwts.parserBuilder().setSigningKey(getKey()).build().parseClaimsJws(token).getBody();
+        } catch (Exception e) {
+            throw new AutenticacaoException("Token inválido");
+        }
     }
     
-    private Key getKey(String key) {
-        byte[] keyDecode = Decoders.BASE64.decode(key);
+    private Key getKey() {
+        byte[] keyDecode = Decoders.BASE64.decode(chaveAssinatura);
         return Keys.hmacShaKeyFor(keyDecode);
     }
+
 
 }

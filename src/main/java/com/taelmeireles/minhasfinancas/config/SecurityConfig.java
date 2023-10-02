@@ -12,8 +12,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
-import com.taelmeireles.minhasfinancas.service.impl.UserDetailsServiceImpl;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,24 +21,22 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final UserDetailsService userDetailsService;
+    private final TokenJwtFilterConfig tokenJwtFilterConfig;
+
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    UserDetailsService userDetailsService() {
-        return new UserDetailsServiceImpl();
-    }
-
-    @Bean
     AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider autheProvider = new DaoAuthenticationProvider();
-        autheProvider.setUserDetailsService(userDetailsService());
+        autheProvider.setUserDetailsService(this.userDetailsService);
         autheProvider.setPasswordEncoder(passwordEncoder());
         return autheProvider;
     }
-
+    
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable());
@@ -50,6 +47,8 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/api/usuarios/auth").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
             .anyRequest().authenticated());
+        
+        http.addFilterBefore(this.tokenJwtFilterConfig, UsernamePasswordAuthenticationFilter.class);
         
         return http.build();
     }

@@ -18,8 +18,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private UsuarioRepository usuarioRepository;
-
+    private final UsuarioRepository usuarioRepository;
+    
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<Usuario> usuarioOpt = this.usuarioRepository.findByEmail(username);
