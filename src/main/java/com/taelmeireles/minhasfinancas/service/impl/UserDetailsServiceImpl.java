@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import com.taelmeireles.minhasfinancas.exception.RegraNegocioException;
 import com.taelmeireles.minhasfinancas.model.Usuario;
 import com.taelmeireles.minhasfinancas.repository.UsuarioRepository;
 
@@ -29,7 +30,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             .roles("USER")
             .build()
 
-        ).orElse(null);
+        ).orElseThrow(() -> new RegraNegocioException("Não foi possível encontrar o usuário pelo email informado."));
     }
     
 }

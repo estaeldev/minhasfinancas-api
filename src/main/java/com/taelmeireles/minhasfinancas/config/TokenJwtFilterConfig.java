@@ -38,14 +38,12 @@ public class TokenJwtFilterConfig extends OncePerRequestFilter {
         
         String token = authorization.split(" ")[1];
 
-        if(Objects.nonNull(token)) {
-            String login = this.tokenJwtService.validTokenReturnSubject(token);
+        if(Objects.nonNull(token) && Boolean.TRUE.equals(this.tokenJwtService.validarToken(token))) {
+            String login = this.tokenJwtService.obterLoginUsuario(token);
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(login);
-            if(Objects.nonNull(userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = 
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
+            UsernamePasswordAuthenticationToken authToken = 
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authToken);
         }
         
         filterChain.doFilter(request, response);

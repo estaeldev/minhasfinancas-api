@@ -1,5 +1,6 @@
 package com.taelmeireles.minhasfinancas.service.impl;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.taelmeireles.minhasfinancas.dto.TokenJwtDto;
+import com.taelmeireles.minhasfinancas.exception.AutenticacaoException;
 import com.taelmeireles.minhasfinancas.exception.RegraNegocioException;
 import com.taelmeireles.minhasfinancas.model.Usuario;
 import com.taelmeireles.minhasfinancas.repository.UsuarioRepository;
@@ -32,20 +34,23 @@ public class UsuarioServiceImpl implements UsuarioService {
     public TokenJwtDto authenticate(String email, String senha) {
         Optional<Usuario> usuarioOtp = this.usuarioRepository.findByEmail(email);
 
-        if(usuarioOtp.isPresent()) {
-            UsernamePasswordAuthenticationToken autheToken = new UsernamePasswordAuthenticationToken(email, senha);
-            this.authenticationManager.authenticate(autheToken);
-
-            String token = this.tokenJwtService.gerarToken(email);
-            
-            return TokenJwtDto.builder()
-                .nome(usuarioOtp.get().getNome())
-                .token(token)
-                .build();
+        if(usuarioOtp.isEmpty() || Objects.isNull(usuarioOtp.get().getEmail())) {
+            throw new AutenticacaoException("Usuário não encontrado pelo email informado.");
+        }
+        
+        if(!this.passwordEncoder.matches(senha, usuarioOtp.get().getSenha())) {
+            throw new AutenticacaoException("Senha inválida.");
         }
 
-        throw new RegraNegocioException("Não foi possível authenticar o usuario");
+        UsernamePasswordAuthenticationToken autheToken = new UsernamePasswordAuthenticationToken(email, senha);
+        this.authenticationManager.authenticate(autheToken);
 
+        String token = this.tokenJwtService.gerarToken(email);
+        
+        return TokenJwtDto.builder()
+            .nome(usuarioOtp.get().getNome())
+            .token(token)
+            .build();
     }
     
     @Override
@@ -57,6 +62,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public void validarEmail(String email) {
         boolean isEmailExist = this.usuarioRepository.existsByEmail(email);
         

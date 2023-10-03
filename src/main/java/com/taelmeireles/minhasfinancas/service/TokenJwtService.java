@@ -4,6 +4,8 @@ public interface TokenJwtService {
     
     String gerarToken(String email);
 
-    String validTokenReturnSubject(String token);
+    Boolean validarToken(String token);
+
+    String obterLoginUsuario(String token);
     
 }
