@@ -1,8 +1,10 @@
 package com.taelmeireles.minhasfinancas.service;
 
+import com.taelmeireles.minhasfinancas.model.Usuario;
+
 public interface TokenJwtService {
     
-    String gerarToken(String email);
+    String gerarToken(Usuario usuario);
 
     Boolean validarToken(String token);
 

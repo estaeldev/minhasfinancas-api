@@ -10,8 +10,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class TokenJwtDto {
-
-    String nome;
     String token;
-
 }

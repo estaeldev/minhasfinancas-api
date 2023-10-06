@@ -45,12 +45,9 @@ public class UsuarioServiceImpl implements UsuarioService {
         UsernamePasswordAuthenticationToken autheToken = new UsernamePasswordAuthenticationToken(email, senha);
         this.authenticationManager.authenticate(autheToken);
 
-        String token = this.tokenJwtService.gerarToken(email);
+        String token = this.tokenJwtService.gerarToken(usuarioOtp.get());
         
-        return TokenJwtDto.builder()
-            .nome(usuarioOtp.get().getNome())
-            .token(token)
-            .build();
+        return TokenJwtDto.builder().token(token).build();
     }
     
     @Override

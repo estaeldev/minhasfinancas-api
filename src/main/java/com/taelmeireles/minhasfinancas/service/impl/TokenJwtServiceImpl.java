@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.taelmeireles.minhasfinancas.exception.RegraNegocioException;
+import com.taelmeireles.minhasfinancas.model.Usuario;
 import com.taelmeireles.minhasfinancas.service.TokenJwtService;
 
 @Service
@@ -20,14 +21,16 @@ public class TokenJwtServiceImpl implements TokenJwtService {
     private String chaveAssinatura;
     
     @Override
-    public String gerarToken(String email) {
+    public String gerarToken(Usuario usuario) {
         try {
             int dataExpiracao = Integer.parseInt(expiracao);
             Algorithm algorithm = getAlgorithm();
     
             return JWT.create()
                 .withIssuer("Minhas Financas Api")
-                .withSubject(email)
+                .withSubject(usuario.getEmail())
+                .withClaim("id", usuario.getId().toString())
+                .withClaim("nome", usuario.getNome())
                 .withIssuedAt(new Date())
                 .withExpiresAt(new Date(System.currentTimeMillis() + 1000 * 60 * dataExpiracao))
                 .sign(algorithm);
